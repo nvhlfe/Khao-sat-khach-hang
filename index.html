@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Khảo Sát Ý Kiến Khách Hàng | Prudential</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=Roboto+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --red:#E4032B;
+    --red-dark:#8C0C22;
+    --red-deep:#5C0716;
+    --gold:#C99A3C;
+    --cream:#FBF7F2;
+    --paper:#FFFFFF;
+    --ink:#2A1015;
+    --ink-soft:#6B5257;
+    --line:#EEDCDD;
+    --D:#E4032B;
+    --I:#E08A1E;
+    --S:#1E8A6B;
+    --C:#2158A6;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Roboto',sans-serif;background:var(--cream);color:var(--ink);}
+  h1,h2,h3,h4{font-family:'Roboto Condensed',sans-serif;margin:0;}
+  .app{max-width:920px;margin:0 auto;min-height:100vh;background:var(--paper);box-shadow:0 0 40px rgba(92,7,22,0.08);}
+
+  /* Header */
+  header.top{background:linear-gradient(135deg,var(--red-deep),var(--red) 70%);color:#fff;padding:22px 20px 0;position:relative;overflow:hidden;}
+  header.top::after{content:"";position:absolute;right:-60px;top:-60px;width:220px;height:220px;border-radius:50%;background:rgba(255,255,255,0.08);}
+  header.top::before{content:"";position:absolute;right:40px;bottom:-90px;width:150px;height:150px;border-radius:50%;background:rgba(255,255,255,0.06);}
+  .brand-row{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:2;}
+  .brand-mark{font-weight:900;letter-spacing:0.5px;font-size:13px;text-transform:uppercase;opacity:0.85;}
+  .brand-mark span{color:var(--gold);}
+  header.top h1{font-size:22px;font-weight:700;margin-top:10px;position:relative;z-index:2;}
+  header.top p.sub{font-size:13.5px;opacity:0.88;margin-top:6px;max-width:520px;position:relative;z-index:2;}
+
+  nav.tabs{display:flex;margin-top:20px;position:relative;z-index:2;}
+  nav.tabs button{flex:1;background:rgba(255,255,255,0.1);border:none;color:#fff;padding:13px 10px;font-family:'Roboto Condensed',sans-serif;font-weight:700;font-size:14.5px;letter-spacing:0.3px;cursor:pointer;border-radius:10px 10px 0 0;opacity:0.72;transition:.2s;}
+  nav.tabs button.active{background:var(--paper);color:var(--red-dark);opacity:1;}
+
+  main{padding:22px 20px 60px;}
+  .view{display:none;}
+  .view.active{display:block;animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  /* Survey intro */
+  .intro-card{background:linear-gradient(180deg,#FFF7F2,#FFF);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:20px;}
+  .intro-card p{font-size:14px;line-height:1.6;color:var(--ink-soft);margin:6px 0 0;}
+  .field-row{display:flex;gap:12px;margin-top:14px;flex-wrap:wrap;}
+  .field{flex:1;min-width:160px;display:flex;flex-direction:column;gap:5px;}
+  .field label{font-size:12px;font-weight:700;color:var(--red-dark);text-transform:uppercase;letter-spacing:.4px;}
+  .field input{border:1.5px solid var(--line);border-radius:10px;padding:11px 12px;font-size:15px;font-family:inherit;background:#fff;}
+  .field input:focus{outline:none;border-color:var(--red);}
+
+  /* progress */
+  .progress-wrap{position:sticky;top:0;background:var(--paper);padding:10px 0 14px;z-index:5;}
+  .progress-bar{height:6px;background:var(--line);border-radius:6px;overflow:hidden;}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--red),var(--gold));width:0%;transition:width .3s;}
+  .progress-label{font-size:12px;color:var(--ink-soft);margin-top:6px;text-align:right;}
+
+  .section-head{margin:30px 0 14px;padding-bottom:8px;border-bottom:2px solid var(--line);}
+  .section-head .eyebrow{font-size:11.5px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1px;}
+  .section-head h3{font-size:17px;color:var(--red-dark);margin-top:3px;}
+
+  .qcard{background:var(--paper);border:1.5px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px;}
+  .qcard .qnum{font-size:12px;font-weight:700;color:var(--gold);}
+  .qcard .qtext{font-size:15px;font-weight:500;margin-top:4px;line-height:1.45;}
+  .opts{margin-top:12px;display:flex;flex-direction:column;gap:8px;}
+  .opt{display:flex;align-items:flex-start;gap:10px;border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;transition:.15s;}
+  .opt:hover{border-color:var(--gold);background:#FFFBF3;}
+  .opt.sel{border-color:var(--red);background:#FFF1F0;}
+  .opt .letter{flex:none;width:24px;height:24px;border-radius:50%;background:var(--line);color:var(--red-dark);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+  .opt.sel .letter{background:var(--red);color:#fff;}
+  .opt .otext{font-size:14px;line-height:1.4;color:var(--ink);}
+
+  textarea{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:12px;font-family:inherit;font-size:14px;min-height:80px;resize:vertical;}
+  textarea:focus{outline:none;border-color:var(--red);}
+
+  .btn{border:none;border-radius:12px;padding:14px 22px;font-family:'Roboto Condensed',sans-serif;font-weight:700;font-size:15px;cursor:pointer;letter-spacing:.3px;}
+  .btn-primary{background:linear-gradient(135deg,var(--red),var(--red-dark));color:#fff;box-shadow:0 8px 20px rgba(228,3,43,0.28);width:100%;margin-top:10px;}
+  .btn-primary:disabled{opacity:.45;box-shadow:none;}
+  .btn-ghost{background:#fff;border:1.5px solid var(--line);color:var(--red-dark);}
+  .btn-row{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+  .btn-row .btn{flex:1;min-width:140px;margin-top:0;}
+
+  /* Result */
+  .result-hero{background:linear-gradient(160deg,var(--red-deep),var(--red));border-radius:18px;padding:26px 20px;color:#fff;text-align:center;position:relative;overflow:hidden;}
+  .result-hero .glyph{font-size:44px;font-weight:900;font-family:'Roboto Condensed',sans-serif;}
+  .result-hero h2{font-size:22px;margin-top:6px;}
+  .result-hero .tagline{font-size:13.5px;opacity:.85;margin-top:4px;}
+  .bars{display:flex;gap:8px;margin:20px 0;}
+  .bar-col{flex:1;text-align:center;}
+  .bar-track{height:110px;background:var(--line);border-radius:8px;display:flex;align-items:flex-end;overflow:hidden;}
+  .bar-fill{width:100%;border-radius:8px 8px 0 0;transition:height .6s ease;}
+  .bar-col .lab{font-size:11px;font-weight:700;margin-top:6px;color:var(--ink-soft);}
+  .bar-col .pct{font-size:13px;font-weight:700;color:var(--ink);}
+
+  .value-box{background:#FFF7ED;border:1.5px solid #F0DDB0;border-radius:14px;padding:16px;margin-top:16px;}
+  .value-box h4{font-size:13px;color:var(--gold);text-transform:uppercase;letter-spacing:.4px;}
+  .value-box p{font-size:14.5px;margin-top:6px;line-height:1.55;}
+
+  .card-block{border:1.5px solid var(--line);border-radius:14px;padding:16px;margin-top:14px;}
+  .card-block h4{font-size:13.5px;color:var(--red-dark);text-transform:uppercase;letter-spacing:.3px;margin-bottom:8px;}
+  .card-block ul{margin:0;padding-left:18px;font-size:14px;line-height:1.55;color:var(--ink);}
+  .card-block ul li{margin-bottom:5px;}
+
+  /* Saved list */
+  .list-item{display:flex;justify-content:space-between;align-items:center;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px;}
+  .list-item .name{font-weight:700;font-size:14.5px;}
+  .list-item .meta{font-size:12px;color:var(--ink-soft);margin-top:2px;}
+  .badge{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;color:#fff;}
+  .list-actions{display:flex;gap:6px;}
+  .icon-btn{border:none;background:var(--line);border-radius:8px;padding:7px 9px;cursor:pointer;font-size:13px;}
+
+  .empty{text-align:center;padding:40px 10px;color:var(--ink-soft);font-size:14px;}
+
+  /* TVV tab */
+  .matrix{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:10px;}
+  .matrix th,.matrix td{border:1px solid var(--line);padding:8px;text-align:left;vertical-align:top;}
+  .matrix th{background:#FFF1F0;color:var(--red-dark);font-size:11.5px;text-transform:uppercase;}
+  .group-card{border-radius:16px;padding:18px;margin-bottom:16px;color:#fff;position:relative;overflow:hidden;}
+  .group-card::after{content:"";position:absolute;right:-30px;top:-30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,0.12);}
+  .group-card .tag{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;opacity:.85;}
+  .group-card h3{font-size:19px;margin-top:4px;position:relative;z-index:2;}
+  .group-card .sub{font-size:13px;opacity:.9;margin-top:4px;position:relative;z-index:2;}
+  .group-body{background:#fff;color:var(--ink);border-radius:0 0 16px 16px;margin-top:-8px;padding:16px;border:1.5px solid var(--line);border-top:none;}
+  .group-body h5{font-size:12px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;}
+  .group-body ul{margin:0 0 14px;padding-left:18px;font-size:13.5px;line-height:1.5;}
+  .group-body ul:last-child{margin-bottom:0;}
+  .avoid li{color:#8C0C22;}
+
+  .kimchinam{background:linear-gradient(135deg,var(--red-deep),var(--red-dark));color:#fff;border-radius:16px;padding:20px;margin-top:20px;text-align:center;}
+  .kimchinam .lab{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--gold);font-weight:700;}
+  .kimchinam p{font-size:14px;line-height:1.6;margin-top:8px;}
+  .kimchinam .pillars{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
+  .kimchinam .pillar{flex:1;min-width:120px;background:rgba(255,255,255,0.1);border-radius:10px;padding:10px;font-size:12.5px;}
+  .kimchinam .pillar b{display:block;font-size:14px;margin-bottom:2px;color:var(--gold);}
+
+  footer.hint{text-align:center;font-size:11.5px;color:var(--ink-soft);padding:16px;opacity:.7;}
+
+  @media (max-width:480px){
+    header.top h1{font-size:19px;}
+    nav.tabs button{font-size:12.5px;padding:11px 6px;}
+    .bar-track{height:90px;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand-row">
+      <div class="brand-mark">Prudential <span>Việt Nam</span></div>
+    </div>
+    <h1>Khảo Sát Ý Kiến Khách Hàng</h1>
+    <p class="sub">15 câu hỏi để thấu hiểu điều khách hàng coi trọng và cách đồng hành phù hợp nhất — không có câu trả lời đúng hay sai.</p>
+    <nav class="tabs">
+      <button id="tabBtnSurvey" class="active" onclick="switchTab('survey')">Khảo Sát</button>
+      <button id="tabBtnList" onclick="switchTab('list')">Danh Sách</button>
+      <button id="tabBtnTvv" onclick="switchTab('tvv')">Dành Cho TVV</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- SURVEY VIEW -->
+    <section id="view-survey" class="view active">
+
+      <div id="formStage">
+        <div class="intro-card">
+          <h3 style="color:var(--red-dark);font-size:16px;">Thông tin khách hàng</h3>
+          <p>Vui lòng chọn 01 phương án gần với anh/chị nhất ở mỗi câu. Anh/chị có thể bỏ qua câu không muốn chia sẻ.</p>
+          <div class="field-row">
+            <div class="field">
+              <label>Họ và tên khách hàng</label>
+              <input id="custName" type="text" placeholder="Nguyễn Văn A">
+            </div>
+            <div class="field">
+              <label>Ngày khảo sát</label>
+              <input id="custDate" type="date">
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>TVV thực hiện</label>
+              <input id="tvvName" type="text" placeholder="Tên chuyên viên tư vấn">
+            </div>
+          </div>
+        </div>
+
+        <div class="progress-wrap">
+          <div class="progress-bar"><div class="progress-fill" id="progFill"></div></div>
+          <div class="progress-label" id="progLabel">0/15 câu đã trả lời</div>
+        </div>
+
+        <div id="questionsHost"></div>
+
+        <div class="field" style="margin-top:6px;">
+          <label>Chia sẻ thêm (nếu khách hàng muốn)</label>
+          <textarea id="freeText" placeholder="Có điều gì anh/chị mong người tư vấn hiểu rõ hơn về bản thân, gia đình hoặc điều anh/chị đang quan tâm?"></textarea>
+        </div>
+
+        <button class="btn btn-primary" id="submitBtn" onclick="submitSurvey()">Xem Kết Quả Khảo Sát</button>
+      </div>
+
+      <div id="resultStage" style="display:none;"></div>
+    </section>
+
+    <!-- LIST VIEW -->
+    <section id="view-list" class="view">
+      <div class="intro-card">
+        <h3 style="color:var(--red-dark);font-size:16px;">Danh sách khảo sát đã lưu</h3>
+        <p>Dữ liệu được lưu trên trình duyệt này. Xuất Excel để tổng hợp toàn bộ khách hàng đã khảo sát.</p>
+      </div>
+      <div class="btn-row" style="margin-bottom:16px;">
+        <button class="btn btn-ghost" onclick="exportExcel()">⬇ Xuất Excel tổng hợp</button>
+        <button class="btn btn-primary" style="margin-top:0;" onclick="switchTab('survey');resetSurvey();">+ Khảo sát mới</button>
+      </div>
+      <div id="listHost"></div>
+    </section>
+
+    <!-- TVV VIEW -->
+    <section id="view-tvv" class="view">
+      <div class="intro-card">
+        <h3 style="color:var(--red-dark);font-size:16px;">Cẩm Nang Đọc Vị Tâm Lý & Chinh Phục Khách Hàng</h3>
+        <p>Phân tích hành vi khách hàng theo DISC & hướng dẫn tác chiến chuyên sâu dành cho Chuyên viên Tư vấn. Nhận diện đúng nhóm tâm lý giúp tiết kiệm 80% thời gian thuyết phục.</p>
+      </div>
+
+      <table class="matrix">
+        <tr><th>Kết quả khảo sát</th><th>Động lực & tâm lý ẩn sâu</th><th>Giải pháp & thông điệp phù hợp</th></tr>
+        <tr><td><b style="color:var(--D)">Nhóm D — Quyết đoán</b><br>Ưu thế chọn A</td><td>Muốn làm chủ, sợ mất quyền kiểm soát, coi trọng hiệu quả & tốc độ.</td><td>Đầu tư / Gia tăng tài sản: tối ưu dòng tiền, chủ động kế hoạch tài chính lớn.</td></tr>
+        <tr><td><b style="color:var(--I)">Nhóm I — Cảm hứng</b><br>Ưu thế chọn B</td><td>Cần sự công nhận, yêu thích kết nối, hành động theo cảm xúc & niềm tự hào.</td><td>Bảo vệ / Cho con: món quà tình yêu gia đình, niềm tự hào kiến tạo tương lai cho con.</td></tr>
+        <tr><td><b style="color:var(--S)">Nhóm S — Kiên định</b><br>Ưu thế chọn C</td><td>Sợ biến cố, ngại rủi ro, cần an toàn tuyệt đối và sự gắn kết chân thành.</td><td>Bảo vệ sức khỏe / Bình an: lá chắn y tế toàn diện, điểm tựa bình an cho gia đình.</td></tr>
+        <tr><td><b style="color:var(--C)">Nhóm C — Cẩn trọng</b><br>Ưu thế chọn D</td><td>Cần chính xác, logic, phân tích kỹ; sợ thông tin mơ hồ hoặc thiếu căn cứ.</td><td>Minh họa chi tiết: điều khoản, bảng dòng tiền, tính pháp lý & uy tín 175+ năm.</td></tr>
+      </table>
+
+      <div id="tvvGroups" style="margin-top:22px;"></div>
+
+      <div class="kimchinam">
+        <div class="lab">Kim chỉ nam dành cho TVV Prudential</div>
+        <p>Bán bảo hiểm Prudential không chỉ là bán một hợp đồng, mà là trao đúng <b>món giá trị</b> mà tâm lý khách hàng đang khao khát.</p>
+        <div class="pillars">
+          <div class="pillar"><b>Nhóm D</b>cần Quyền lực</div>
+          <div class="pillar"><b>Nhóm I</b>cần Niềm tự hào</div>
+          <div class="pillar"><b>Nhóm S</b>cần Sự an tâm</div>
+          <div class="pillar"><b>Nhóm C</b>cần Sự minh bạch</div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer class="hint">Khảo Sát Ý Kiến Khách Hàng · GA Prudential · Dữ liệu lưu cục bộ trên thiết bị này</footer>
+</div>
+
+<script>
+/* ---------------- DATA ---------------- */
+const SECTIONS = [
+  { title:"Trải nghiệm & cách khách hàng muốn được đồng hành", eyebrow:"01",
+    qs:[
+      {t:"Trong quá trình đồng hành cùng bảo hiểm, điều gì khiến anh/chị cảm thấy hài lòng và yên tâm nhất?",
+       o:["Được hỗ trợ nhanh khi có vấn đề.","Được tư vấn quan tâm, nhớ điều quan trọng.","Luôn có người đồng hành khi cần.","Được cung cấp thông tin rõ ràng, chính xác."]},
+      {t:"Nếu người tư vấn chủ động gọi cho anh/chị, điều gì khiến cuộc gọi đó thật sự có ý nghĩa?",
+       o:["Giúp tôi nhìn ra cơ hội/giải pháp tốt hơn.","Hỏi thăm và quan tâm đến cuộc sống.","Lắng nghe xem hiện tại tôi có cần hỗ trợ gì.","Cập nhật thông tin cần thiết về hợp đồng."]},
+      {t:"Anh/chị mong muốn người tư vấn hiểu điều gì về mình trước khi đưa ra bất kỳ lời khuyên nào?",
+       o:["Mục tiêu và kế hoạch của tôi.","Gia đình và những điều tôi coi trọng.","Điều khiến tôi cảm thấy an toàn/lo lắng.","Tình hình tài chính & kế hoạch đang có."]},
+    ]},
+  { title:"Cuộc sống & điều khách hàng coi trọng", eyebrow:"02",
+    qs:[
+      {t:"Nhìn lại chặng đường đã qua, điều gì là niềm tự hào lớn nhất mà anh/chị đã gây dựng được?",
+       o:["Xây dựng sự nghiệp & tài chính độc lập.","Chăm lo tốt cho gia đình & người thân.","Xây dựng cuộc sống ổn định và bình an.","Tích lũy tài sản, chuẩn bị cho tương lai."]},
+      {t:"Hiện tại, điều gì anh/chị muốn giữ vững nhất trong cuộc sống?",
+       o:["Thu nhập, sự nghiệp và sự chủ động.","Gia đình, mối quan hệ & chất lượng sống.","Sự bình yên và ổn định của bản thân/gia đình.","Tài sản và nền tảng tài chính."]},
+      {t:"Nếu tài chính của anh/chị tốt hơn đáng kể trong 10 năm tới, anh/chị muốn điều đó giúp mình đạt được điều gì?",
+       o:["Tự do tài chính và nhiều lựa chọn hơn.","Cho gia đình một cuộc sống tốt hơn.","Tương lai nhẹ nhàng, ít lo lắng hơn.","Tích lũy & xây dựng nền tảng vững chắc."]},
+      {t:"Sau tất cả nỗ lực và vất vả đã qua, điều gì khiến anh/chị cảm thấy cuộc sống của mình thực sự \"trọn vẹn\"?",
+       o:["Tự do làm điều mình muốn, không phụ thuộc.","Người thân yêu đều sống an vui, đủ đầy.","Tâm bình yên, không lo âu về tương lai.","Thành quả gây dựng có điểm tựa vững vàng."]},
+    ]},
+  { title:"Những điều khách hàng muốn bảo vệ", eyebrow:"03",
+    qs:[
+      {t:"Trước những biến động bất ngờ của cuộc sống, nỗi trăn trở lớn nhất luôn đau đáu trong lòng anh/chị là gì?",
+       o:["Công việc, thu nhập/kế hoạch bị gián đoạn.","Người thân yêu bị ảnh hưởng hay gánh rủi ro.","Cuộc sống mất đi sự ổn định và bình an.","Tài sản & kế hoạch tích lũy bị hao hụt."]},
+      {t:"Có điều gì hiện tại anh/chị cảm thấy \"mình có thể đang chuẩn bị chưa đủ\" không?",
+       o:["Thu nhập & khả năng tạo tiền tương lai.","Sự bảo vệ cho gia đình và con cái.","Sức khỏe và cuộc sống sau này.","Tài sản, đầu tư, hưu trí/dài hạn."]},
+      {t:"Mái tóc ngả màu ở tuổi 60, kịch bản nào là điều anh/chị xót xa nhất nếu nó xảy ra?",
+       o:["Muốn an hưởng nhưng vẫn bận lòng vì tài chính.","Cả đời lo cho con, cuối đời lại thành gánh nặng.","Tuổi già phập phồng lo sợ bệnh tật & chi phí.","Có tài sản nhưng thiếu kế hoạch bảo vệ/sử dụng."]},
+      {t:"Nếu một ngày vì lý do bất khả kháng phải tạm lui về phía sau, \"lời hứa\" nào anh/chị nhất định muốn hoàn thành cho gia đình?",
+       o:["Dự định, hoài bão gia đình đi đúng hướng.","Tương lai con cái & chất lượng sống ổn định.","Giữ bình yên, người thân không gánh áp lực.","Thành quả tạo dựng được bảo vệ vẹn nguyên."]},
+      {t:"Nếu nhìn vào những gì mình đã tạo dựng đến hôm nay, điều gì anh/chị muốn bảo vệ nhất?",
+       o:["Sự nghiệp và khả năng tạo ra thu nhập.","Gia đình và những người mình yêu thương.","Sự bình an và chất lượng cuộc sống.","Tài sản & giá trị để lại cho thế hệ sau."]},
+    ]},
+  { title:"Nhìn lại kế hoạch & định hướng tương lai", eyebrow:"04",
+    qs:[
+      {t:"Khi nghĩ về những hợp đồng bảo hiểm hiện tại, điều anh/chị muốn biết nhất là gì?",
+       o:["Kế hoạch hiện tại đã tối ưu chưa?","Gia đình tôi đã được bảo vệ đủ chưa?","Tôi có thực sự an tâm với kế hoạch này?","Hiểu rõ quyền lợi, điều kiện & mức bảo vệ?"]},
+      {t:"Nếu người tư vấn giúp rà soát toàn bộ kế hoạch hiện tại, anh/chị mong nhận được điều gì sau buổi gặp?",
+       o:["Biết mình có thể tối ưu điều gì.","Biết gia đình đang được bảo vệ thế nào.","Biết mình đã chuẩn bị đủ để an tâm chưa.","Bức tranh rõ ràng: đang có - thiếu - cần chỉnh."]},
+      {t:"Nếu người tư vấn có thể giúp giải quyết DUY NHẤT một điều về kế hoạch tài chính/bảo vệ, anh/chị muốn đó là gì?",
+       o:["Chủ động hơn về tài chính & lựa chọn.","Bảo vệ tốt hơn cho gia đình thân yêu.","An tâm hơn trước những điều khó đoán.","Hiểu rõ và hoàn thiện kế hoạch hiện tại."]},
+    ]},
+];
+
+const LETTERS = ["A","B","C","D"];
+// A -> D (Quyết đoán), B -> I (Cảm hứng), C -> S (Kiên định), D -> C (Cẩn trọng)
+const GROUP_BY_LETTER = { A:"D", B:"I", C:"S", D:"C" };
+
+const GROUPS = {
+  D:{ name:"Nhóm D — Quyết Đoán", color:"var(--D)", key:"D",
+      trait:"Muốn làm chủ, sợ mất quyền kiểm soát, coi trọng hiệu quả & tốc độ.",
+      value:"Đầu tư / Gia tăng tài sản: tối ưu dòng tiền, chủ động kế hoạch tài chính lớn.",
+      needs:"Quyền lực",
+      ket:["Nói về \"Kế hoạch làm chủ tài chính\" thay vì chỉ nói mua bảo hiểm phòng rủi ro.","Dùng từ vị thế ngang hàng: \"giải pháp tối ưu\", \"quyền quyết định\", \"chủ động dòng tiền\"."],
+      lam:["Đưa ra 2-3 phương án để khách hàng tự chọn, tự làm chủ quyết định.","Tập trung vào hiệu quả: quyền lợi nhận về là gì, giải quyết sự cố nhanh ra sao.","Trình bày đĩnh đạc, ngắn gọn, đi thẳng vào kết quả cốt lõi trong 15 phút."],
+      tranh:["Không nói lan man về hoàn cảnh khó khăn hay dùng chiêu trò cảm xúc rườm rà.","Không tranh luận đúng sai hoặc cố tình ngắt lời khi khách hàng đang khẳng định vị thế."]},
+  I:{ name:"Nhóm I — Cảm Hứng", color:"var(--I)", key:"I",
+      trait:"Cần sự công nhận, yêu thích kết nối, hành động theo cảm xúc & niềm tự hào.",
+      value:"Bảo vệ / Cho con: món quà tình yêu gia đình, niềm tự hào kiến tạo tương lai cho con.",
+      needs:"Niềm tự hào",
+      ket:["Nói về \"Món quà tình yêu & niềm tự hào\" dành cho người thân.","Khen ngợi chân thành gu sống và tình yêu thương gia đình của khách hàng."],
+      lam:["Kể chuyện (storytelling) về những gia đình được Prudential bảo vệ thành công.","Gắn hợp đồng với hình ảnh \"tấm thiệp tình yêu\" hoặc di sản cho con.","TVV làm toàn bộ khâu thủ tục phức tạp, giúp khách hàng trải nghiệm nhẹ nhàng nhất."],
+      tranh:["Không dội gáo nước lạnh bằng hàng loạt thuật ngữ khô khan, con số quá dày đặc.","Không tỏ ra quá lạnh lùng, xa cách hay chỉ chăm chăm vào việc ký hợp đồng."]},
+  S:{ name:"Nhóm S — Kiên Định", color:"var(--S)", key:"S",
+      trait:"Sợ biến cố, ngại rủi ro, cần an toàn tuyệt đối và sự gắn kết chân thành.",
+      value:"Bảo vệ sức khỏe / Bình an: lá chắn y tế toàn diện, điểm tựa bình an vững chắc cho gia đình.",
+      needs:"Sự an tâm",
+      ket:["Nói về \"Sự an tâm dài lâu & điểm tựa vững chắc\" trước sóng gió.","Giọng điệu ấm áp, từ tốn, điềm tĩnh; tạo không khí an toàn tuyệt đối."],
+      lam:["Lắng nghe trăn trở lo lắng cho con cái/tuổi già của khách hàng một cách chân thành.","Cam kết đồng hành cá nhân dài lâu: \"Em sẽ luôn ở đây hỗ trợ gia đình mình\".","Giải thích từng bước một nhẹ nhàng, để khách hàng thấu hiểu và tin tưởng hoàn toàn."],
+      tranh:["Không dồn ép, gây áp lực thời gian hoặc hối thúc chốt gấp.","Không vẽ ra những kịch bản quá u uất làm khách hàng hoảng sợ và co mình lại."]},
+  C:{ name:"Nhóm C — Cẩn Trọng", color:"var(--C)", key:"C",
+      trait:"Cần chính xác, logic, phân tích kỹ; sợ thông tin mơ hồ hoặc thiếu căn cứ.",
+      value:"Minh họa chi tiết: đi thẳng vào điều khoản, bảng dòng tiền, tính pháp lý & uy tín 175+ năm.",
+      needs:"Sự minh bạch",
+      ket:["Nói bằng con số, điều khoản & cơ sở pháp lý minh bạch.","Dùng ngôn từ chuẩn xác, khách quan; viện dẫn uy tín thương hiệu Prudential."],
+      lam:["Gửi bảng minh họa quyền lợi chỉn chu, làm rõ các khoản phí, điều khoản loại trừ.","Chuẩn bị sẵn tài liệu quy tắc sản phẩm và giải trình rõ ràng mọi thắc mắc.","Tôn trọng không gian riêng để khách hàng tự soi chiếu và tính toán."],
+      tranh:["Không hứa hẹn viễn vông, nói chung chung không có căn cứ.","Không lúng túng khi bị hỏi sâu về kỹ thuật hợp đồng hoặc điều khoản."]},
+};
+
+/* ---------------- STATE ---------------- */
+let answers = {}; // qIndex(global) -> letter
+const totalQ = SECTIONS.reduce((a,s)=>a+s.qs.length,0);
+const STORAGE_KEY = "prud_customer_surveys_v1";
+
+/* ---------------- RENDER QUESTIONS ---------------- */
+function renderQuestions(){
+  const host = document.getElementById('questionsHost');
+  let html = "";
+  let gIdx = 0;
+  SECTIONS.forEach(sec=>{
+    html += `<div class="section-head"><div class="eyebrow">${sec.eyebrow}</div><h3>${sec.title}</h3></div>`;
+    sec.qs.forEach(q=>{
+      const myIdx = gIdx;
+      html += `<div class="qcard" id="qcard-${myIdx}">
+        <div class="qnum">CÂU ${myIdx+1}</div>
+        <div class="qtext">${q.t}</div>
+        <div class="opts">`;
+      q.o.forEach((opt,i)=>{
+        const letter = LETTERS[i];
+        html += `<div class="opt" onclick="selectAnswer(${myIdx},'${letter}')" id="opt-${myIdx}-${letter}">
+          <div class="letter">${letter}</div><div class="otext">${opt}</div></div>`;
+      });
+      html += `</div></div>`;
+      gIdx++;
+    });
+  });
+  host.innerHTML = html;
+}
+
+function selectAnswer(qIdx, letter){
+  answers[qIdx] = letter;
+  LETTERS.forEach(l=>{
+    document.getElementById(`opt-${qIdx}-${l}`).classList.toggle('sel', l===letter);
+  });
+  updateProgress();
+}
+
+function updateProgress(){
+  const answered = Object.keys(answers).length;
+  document.getElementById('progFill').style.width = (answered/totalQ*100)+"%";
+  document.getElementById('progLabel').textContent = `${answered}/${totalQ} câu đã trả lời`;
+  document.getElementById('submitBtn').disabled = answered===0;
+}
+
+/* ---------------- SCORING ---------------- */
+function computeScore(){
+  const counts = {A:0,B:0,C:0,D:0};
+  Object.values(answers).forEach(l=>counts[l]++);
+  const answeredTotal = Object.values(counts).reduce((a,b)=>a+b,0) || 1;
+  let topLetter = "A", topVal=-1;
+  LETTERS.forEach(l=>{ if(counts[l]>topVal){topVal=counts[l];topLetter=l;} });
+  const groupKey = GROUP_BY_LETTER[topLetter];
+  return { counts, answeredTotal, topLetter, groupKey };
+}
+
+/* ---------------- SUBMIT / RESULT ---------------- */
+function submitSurvey(){
+  if(Object.keys(answers).length===0) return;
+  const score = computeScore();
+  const record = {
+    id: 'cs_'+Date.now(),
+    name: document.getElementById('custName').value.trim() || "(Chưa nhập tên)",
+    date: document.getElementById('custDate').value || new Date().toISOString().slice(0,10),
+    tvv: document.getElementById('tvvName').value.trim(),
+    freeText: document.getElementById('freeText').value.trim(),
+    answers: {...answers},
+    counts: score.counts,
+    groupKey: score.groupKey,
+    savedAt: Date.now()
+  };
+  saveRecord(record);
+  renderResult(record);
+  document.getElementById('formStage').style.display = 'none';
+  const rs = document.getElementById('resultStage');
+  rs.style.display = 'block';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function renderResult(record){
+  const g = GROUPS[record.groupKey];
+  const total = Object.values(record.counts).reduce((a,b)=>a+b,0) || 1;
+  const barColors = {A:'var(--D)',B:'var(--I)',C:'var(--S)',D:'var(--C)'};
+  const barLabels = {A:'A · Nhóm D',B:'B · Nhóm I',C:'C · Nhóm S',D:'D · Nhóm C'};
+  let bars = "";
+  LETTERS.forEach(l=>{
+    const pct = Math.round(record.counts[l]/total*100);
+    bars += `<div class="bar-col">
+      <div class="bar-track"><div class="bar-fill" style="height:${pct}%;background:${barColors[l]}"></div></div>
+      <div class="pct">${pct}%</div><div class="lab">${barLabels[l]}</div></div>`;
+  });
+
+  const html = `
+    <div class="result-hero">
+      <div class="glyph">${g.key}</div>
+      <h2>${g.name}</h2>
+      <div class="tagline">${record.name} · nhu cầu tâm lý cốt lõi: ${g.needs}</div>
+    </div>
+    <div class="bars">${bars}</div>
+    <div class="value-box">
+      <h4>Động lực & tâm lý ẩn sâu</h4>
+      <p>${g.trait}</p>
+      <h4 style="margin-top:12px;">Giải pháp & thông điệp phù hợp</h4>
+      <p>${g.value}</p>
+    </div>
+    <div class="card-block">
+      <h4 style="color:${g.color}">Bắt nhịp & nói đúng "tần số"</h4>
+      <ul>${g.ket.map(x=>`<li>${x}</li>`).join('')}</ul>
+    </div>
+    <div class="card-block">
+      <h4 style="color:${g.color}">Hướng dẫn tác chiến</h4>
+      <ul>${g.lam.map(x=>`<li>${x}</li>`).join('')}</ul>
+    </div>
+    <div class="card-block">
+      <h4 style="color:var(--red-dark)">Điểm nghẽn tâm lý — cần tránh</h4>
+      <ul class="avoid">${g.tranh.map(x=>`<li>${x}</li>`).join('')}</ul>
+    </div>
+    ${record.freeText ? `<div class="card-block"><h4 style="color:var(--red-dark)">Chia sẻ thêm từ khách hàng</h4><p style="font-size:14px;line-height:1.55;">${record.freeText}</p></div>` : ''}
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="exportSinglePdf('${record.id}')">⬇ Xuất PDF kết quả</button>
+      <button class="btn btn-primary" style="margin-top:0;" onclick="resetSurvey()">+ Khảo sát khách hàng khác</button>
+    </div>
+  `;
+  document.getElementById('resultStage').innerHTML = html;
+  document.getElementById('resultStage').dataset.recordId = record.id;
+}
+
+function resetSurvey(){
+  answers = {};
+  document.getElementById('custName').value='';
+  document.getElementById('tvvName').value='';
+  document.getElementById('freeText').value='';
+  document.getElementById('custDate').value='';
+  renderQuestions();
+  updateProgress();
+  document.getElementById('formStage').style.display='block';
+  document.getElementById('resultStage').style.display='none';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ---------------- STORAGE ---------------- */
+function loadRecords(){
+  try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }catch(e){ return []; }
+}
+function saveRecord(record){
+  const all = loadRecords();
+  all.unshift(record);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+  renderList();
+}
+function deleteRecord(id){
+  if(!confirm('Xóa khảo sát này?')) return;
+  const all = loadRecords().filter(r=>r.id!==id);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+  renderList();
+}
+
+function renderList(){
+  const all = loadRecords();
+  const host = document.getElementById('listHost');
+  if(all.length===0){
+    host.innerHTML = `<div class="empty">Chưa có khảo sát nào được lưu.<br>Hoàn thành một khảo sát ở tab "Khảo Sát" để bắt đầu.</div>`;
+    return;
+  }
+  const colors = {D:'var(--D)',I:'var(--I)',S:'var(--S)',C:'var(--C)'};
+  host.innerHTML = all.map(r=>{
+    const g = GROUPS[r.groupKey];
+    return `<div class="list-item">
+      <div>
+        <div class="name">${r.name}</div>
+        <div class="meta">${r.date}${r.tvv ? ' · TVV: '+r.tvv : ''}</div>
+      </div>
+      <div class="list-actions">
+        <span class="badge" style="background:${colors[r.groupKey]}">${g.key}</span>
+        <button class="icon-btn" onclick="viewSaved('${r.id}')">Xem</button>
+        <button class="icon-btn" onclick="deleteRecord('${r.id}')">Xóa</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function viewSaved(id){
+  const r = loadRecords().find(x=>x.id===id);
+  if(!r) return;
+  switchTab('survey');
+  document.getElementById('formStage').style.display='none';
+  document.getElementById('resultStage').style.display='block';
+  renderResult(r);
+}
+
+/* ---------------- EXPORT ---------------- */
+function exportSinglePdf(id){
+  const r = loadRecords().find(x=>x.id===id) || null;
+  const record = r || JSON.parse(JSON.stringify({id, name:document.getElementById('custName').value}));
+  const g = GROUPS[record.groupKey || 'D'];
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let y = 18;
+  doc.setFontSize(16); doc.setTextColor(140,12,34);
+  doc.text("Khao Sat Y Kien Khach Hang - Prudential", 14, y); y+=8;
+  doc.setFontSize(11); doc.setTextColor(40,40,40);
+  doc.text(`Khach hang: ${record.name || ''}`, 14, y); y+=6;
+  doc.text(`Ngay: ${record.date || ''}    TVV: ${record.tvv || ''}`, 14, y); y+=10;
+  doc.setFontSize(14); doc.setTextColor(228,3,43);
+  doc.text(`Ket qua: ${g.name.replace('Đ','D').replace('Ậ','A')}`, 14, y); y+=8;
+  doc.setFontSize(10.5); doc.setTextColor(60,60,60);
+  const wrap = (label, text)=>{
+    doc.setTextColor(140,12,34); doc.text(label, 14, y); y+=5.5;
+    doc.setTextColor(50,50,50);
+    const lines = doc.splitTextToSize(text, 180);
+    doc.text(lines, 14, y); y += lines.length*5 + 4;
+  };
+  wrap("Dong luc & tam ly an sau:", g.trait);
+  wrap("Giai phap & thong diep phu hop:", g.value);
+  wrap("Bat nhip & noi dung tan so:", g.ket.join(" | "));
+  wrap("Huong dan tac chien:", g.lam.join(" | "));
+  wrap("Diem nghen tam ly can tranh:", g.tranh.join(" | "));
+  if(record.freeText){ wrap("Chia se them tu khach hang:", record.freeText); }
+  doc.save(`KhaoSat_${(record.name||'KhachHang').replace(/\s+/g,'_')}.pdf`);
+}
+
+function exportExcel(){
+  const all = loadRecords();
+  if(all.length===0){ alert('Chưa có dữ liệu để xuất.'); return; }
+  const rows = all.map(r=>({
+    "Họ tên KH": r.name,
+    "Ngày": r.date,
+    "TVV": r.tvv,
+    "Nhóm kết quả": GROUPS[r.groupKey].name,
+    "Số A": r.counts.A, "Số B": r.counts.B, "Số C": r.counts.C, "Số D": r.counts.D,
+    "Chia sẻ thêm": r.freeText
+  }));
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Khảo sát KH");
+  XLSX.writeFile(wb, "TongHop_KhaoSatKhachHang.xlsx");
+}
+
+/* ---------------- TVV TAB ---------------- */
+function renderTvvGroups(){
+  const host = document.getElementById('tvvGroups');
+  const bg = {D:'linear-gradient(135deg,#8C0C22,#E4032B)', I:'linear-gradient(135deg,#9A5A00,#E08A1E)',
+              S:'linear-gradient(135deg,#0E5A44,#1E8A6B)', C:'linear-gradient(135deg,#123A6E,#2158A6)'};
+  host.innerHTML = ['D','I','S','C'].map(k=>{
+    const g = GROUPS[k];
+    return `<div class="group-card" style="background:${bg[k]}">
+        <div class="tag">Ưu thế chọn ${Object.keys(GROUP_BY_LETTER).find(l=>GROUP_BY_LETTER[l]===k)}</div>
+        <h3>${g.name}</h3>
+        <div class="sub">${g.trait}</div>
+      </div>
+      <div class="group-body">
+        <h5>Bắt nhịp & nói đúng "tần số"</h5>
+        <ul>${g.ket.map(x=>`<li>${x}</li>`).join('')}</ul>
+        <h5>Hướng dẫn tác chiến (cần làm)</h5>
+        <ul>${g.lam.map(x=>`<li>${x}</li>`).join('')}</ul>
+        <h5>Điểm nghẽn tâm lý (cần tránh)</h5>
+        <ul class="avoid">${g.tranh.map(x=>`<li>${x}</li>`).join('')}</ul>
+      </div>`;
+  }).join('');
+}
+
+/* ---------------- TABS ---------------- */
+function switchTab(name){
+  ['survey','list','tvv'].forEach(n=>{
+    document.getElementById('view-'+n).classList.toggle('active', n===name);
+    document.getElementById('tabBtn'+n.charAt(0).toUpperCase()+n.slice(1)).classList.toggle('active', n===name);
+  });
+  if(name==='list') renderList();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ---------------- INIT ---------------- */
+document.getElementById('custDate').valueAsDate = new Date();
+renderQuestions();
+updateProgress();
+renderTvvGroups();
+renderList();
+</script>
+</body>
+</html>
