@@ -8,6 +8,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=Roboto+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <style>
   :root{
     --red:#E4032B;
@@ -255,6 +257,20 @@
 </div>
 
 <script>
+/* ---------------- FIREBASE ---------------- */
+const firebaseConfig = {
+  apiKey: "AIzaSyCGOl8B-CEWq6rkqU9MLSAPEUyKjKWgiVg",
+  authDomain: "tong-hop-thi-dua.firebaseapp.com",
+  projectId: "tong-hop-thi-dua",
+  storageBucket: "tong-hop-thi-dua.firebasestorage.app",
+  messagingSenderId: "264264235744",
+  appId: "1:264264235744:web:f93c02ceb02d9adeb1ae85"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const SURVEY_COLLECTION = "khaosat_khachhang_d07";
+const LIST_PASSCODE = "d07"; // đổi mã này khi cần, chỉ áp dụng cho tab Danh Sách
+
 /* ---------------- DATA ---------------- */
 const SECTIONS = [
   { title:"Trải nghiệm & cách khách hàng muốn được đồng hành", eyebrow:"01",
@@ -476,25 +492,69 @@ function resetSurvey(){
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
-/* ---------------- STORAGE ---------------- */
-function loadRecords(){
+/* ---------------- STORAGE (Firestore + local fallback) ---------------- */
+let cloudRecords = [];
+let cloudReady = false;
+
+function loadLocalRecords(){
   try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }catch(e){ return []; }
 }
-function saveRecord(record){
-  const all = loadRecords();
-  all.unshift(record);
+function saveLocalRecords(all){
   localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
-  renderList();
 }
+function getAllRecords(){
+  return cloudReady ? cloudRecords : loadLocalRecords();
+}
+
+function startRecordsListener(){
+  db.collection(SURVEY_COLLECTION).orderBy('savedAt','desc').onSnapshot(snap=>{
+    cloudRecords = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+    cloudReady = true;
+    saveLocalRecords(cloudRecords); // keep an offline cache in sync
+    renderList();
+  }, err=>{
+    console.error('Firestore listener error, falling back to local data:', err);
+    cloudReady = false;
+    renderList();
+  });
+}
+
+function saveRecord(record){
+  // always keep a local copy immediately, so nothing is lost if offline
+  const local = loadLocalRecords();
+  local.unshift(record);
+  saveLocalRecords(local);
+  // then push to Firestore so it's visible to everyone using this link
+  db.collection(SURVEY_COLLECTION).doc(record.id).set(record).catch(err=>{
+    console.error('Không thể đồng bộ lên Firestore:', err);
+  });
+}
+
 function deleteRecord(id){
   if(!confirm('Xóa khảo sát này?')) return;
-  const all = loadRecords().filter(r=>r.id!==id);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+  db.collection(SURVEY_COLLECTION).doc(id).delete().catch(err=>console.error(err));
+  const local = loadLocalRecords().filter(r=>r.id!==id);
+  saveLocalRecords(local);
+  cloudRecords = cloudRecords.filter(r=>r.id!==id);
   renderList();
 }
 
+/* ---------------- LIST PASSCODE GATE ---------------- */
+const LIST_UNLOCK_KEY = 'prud_list_unlocked';
+function ensureListUnlocked(){
+  if(sessionStorage.getItem(LIST_UNLOCK_KEY) === '1') return true;
+  const entered = prompt('Nhập mã truy cập để xem Danh Sách khảo sát:');
+  if(entered === null) return false;
+  if(entered.trim() === LIST_PASSCODE){
+    sessionStorage.setItem(LIST_UNLOCK_KEY, '1');
+    return true;
+  }
+  alert('Mã không đúng.');
+  return false;
+}
+
 function renderList(){
-  const all = loadRecords();
+  const all = getAllRecords();
   const host = document.getElementById('listHost');
   if(all.length===0){
     host.innerHTML = `<div class="empty">Chưa có khảo sát nào được lưu.<br>Hoàn thành một khảo sát ở tab "Khảo Sát" để bắt đầu.</div>`;
@@ -518,7 +578,7 @@ function renderList(){
 }
 
 function viewSaved(id){
-  const r = loadRecords().find(x=>x.id===id);
+  const r = getAllRecords().find(x=>x.id===id);
   if(!r) return;
   switchTab('survey');
   document.getElementById('formStage').style.display='none';
@@ -528,7 +588,7 @@ function viewSaved(id){
 
 /* ---------------- EXPORT ---------------- */
 function exportSinglePdf(id){
-  const r = loadRecords().find(x=>x.id===id) || null;
+  const r = getAllRecords().find(x=>x.id===id) || null;
   const record = r || JSON.parse(JSON.stringify({id, name:document.getElementById('custName').value}));
   const g = GROUPS[record.groupKey || 'D'];
   const { jsPDF } = window.jspdf;
@@ -558,7 +618,7 @@ function exportSinglePdf(id){
 }
 
 function exportExcel(){
-  const all = loadRecords();
+  const all = getAllRecords();
   if(all.length===0){ alert('Chưa có dữ liệu để xuất.'); return; }
   const rows = all.map(r=>({
     "Họ tên KH": r.name,
@@ -599,6 +659,7 @@ function renderTvvGroups(){
 
 /* ---------------- TABS ---------------- */
 function switchTab(name){
+  if(name==='list' && !ensureListUnlocked()) return;
   ['survey','list','tvv'].forEach(n=>{
     document.getElementById('view-'+n).classList.toggle('active', n===name);
     document.getElementById('tabBtn'+n.charAt(0).toUpperCase()+n.slice(1)).classList.toggle('active', n===name);
@@ -612,7 +673,8 @@ document.getElementById('custDate').valueAsDate = new Date();
 renderQuestions();
 updateProgress();
 renderTvvGroups();
-renderList();
+renderList(); // shows local cache instantly while Firestore connects
+startRecordsListener();
 </script>
 </body>
 </html>
