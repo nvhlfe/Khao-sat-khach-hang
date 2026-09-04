@@ -162,10 +162,11 @@
     <p class="sub">15 câu hỏi để thấu hiểu điều khách hàng coi trọng và cách đồng hành phù hợp nhất — không có câu trả lời đúng hay sai.</p>
     <nav class="tabs">
       <button id="tabBtnSurvey" class="active" onclick="switchTab('survey')">Khảo Sát</button>
-      <button id="tabBtnList" onclick="switchTab('list')">Danh Sách</button>
       <button id="tabBtnTvv" onclick="switchTab('tvv')">Dành Cho TVV</button>
     </nav>
   </header>
+
+  <button id="hiddenListTrigger" onclick="switchTab('list')" aria-label="" title="" style="position:fixed;right:14px;bottom:14px;width:30px;height:30px;border-radius:50%;background:rgba(140,12,34,0.10);border:none;color:rgba(140,12,34,0.32);font-size:13px;line-height:30px;cursor:pointer;z-index:50;">•••</button>
 
   <main>
     <!-- SURVEY VIEW -->
@@ -662,6 +663,8 @@ function switchTab(name){
   if(name==='list' && !ensureListUnlocked()) return;
   ['survey','list','tvv'].forEach(n=>{
     document.getElementById('view-'+n).classList.toggle('active', n===name);
+  });
+  ['survey','tvv'].forEach(n=>{
     document.getElementById('tabBtn'+n.charAt(0).toUpperCase()+n.slice(1)).classList.toggle('active', n===name);
   });
   if(name==='list') renderList();
